@@ -17,24 +17,23 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 import cpw.mods.fml.common.FMLCommonHandler;
+import mods.railcraft.api.core.items.IToolGoggles;
 import mods.railcraft.common.blocks.hidden.BlockHidden;
 import mods.railcraft.common.blocks.hidden.TrailTicker;
 import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.core.RailcraftConstants;
-import mods.railcraft.common.plugins.forge.ChatPlugin;
 import mods.railcraft.common.plugins.forge.CraftingPlugin;
 import mods.railcraft.common.plugins.forge.CreativePlugin;
 import mods.railcraft.common.plugins.forge.LocalizationPlugin;
 import mods.railcraft.common.plugins.forge.LootPlugin;
 import mods.railcraft.common.plugins.forge.OreDictPlugin;
 import mods.railcraft.common.plugins.forge.RailcraftRegistry;
-import mods.railcraft.common.util.misc.Game;
 import mods.railcraft.common.util.misc.MiscTools;
 
 /**
  * @author CovertJaguar <http://www.railcraft.info>
  */
-public class ItemGoggles extends ItemArmor {
+public class ItemGoggles extends ItemArmor implements IToolGoggles {
 
     private static final String TEXTURE = RailcraftConstants.ARMOR_TEXTURE_FOLDER + "goggles.png";
     private static ItemGoggles item;
@@ -83,7 +82,8 @@ public class ItemGoggles extends ItemArmor {
         return new ItemStack(item);
     }
 
-    public static GoggleAura getCurrentAura(ItemStack goggles) {
+    @Override
+    public GoggleAura getCurrentAura(ItemStack goggles) {
         GoggleAura aura = GoggleAura.NONE;
         if (goggles != null && goggles.getItem() instanceof ItemGoggles) {
             NBTTagCompound data = goggles.getTagCompound();
@@ -92,7 +92,7 @@ public class ItemGoggles extends ItemArmor {
         return aura;
     }
 
-    public static void incrementAura(ItemStack goggles) {
+    public void incrementAura(ItemStack goggles) {
         if (goggles != null && goggles.getItem() instanceof ItemGoggles) {
             NBTTagCompound data = goggles.getTagCompound();
             if (data == null) {
@@ -113,13 +113,6 @@ public class ItemGoggles extends ItemArmor {
         return item != null;
     }
 
-    public static ItemStack getGoggles(EntityPlayer player) {
-        if (player == null) return null;
-        ItemStack helm = player.getCurrentArmor(MiscTools.ArmorSlots.HELM.ordinal());
-        if (helm != null && helm.getItem() instanceof ItemGoggles) return helm;
-        return null;
-    }
-
     public static boolean isPlayerWearing(EntityPlayer player) {
         ItemStack helm = player.getCurrentArmor(MiscTools.ArmorSlots.HELM.ordinal());
         return helm != null && helm.getItem() instanceof ItemGoggles;
@@ -133,10 +126,7 @@ public class ItemGoggles extends ItemArmor {
     @Override
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         incrementAura(stack);
-        if (Game.isNotHost(world)) {
-            GoggleAura aura = getCurrentAura(stack);
-            ChatPlugin.sendLocalizedChat(player, "railcraft.gui.goggles.mode", "\u00A75" + aura);
-        }
+        IToolGoggles.displaySwitchMessage(world, player, getCurrentAura(stack));
         return stack.copy();
     }
 
