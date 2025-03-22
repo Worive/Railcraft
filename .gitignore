@@ -13,7 +13,6 @@
 /logs/
 options.txt
 /saves/
-layout.json
 usernamecache.json
 banned-ips.json
 banned-players.json
@@ -29,3 +28,4 @@ whitelist.json
 *.iws
 src/main/resources/mixins.*.json
 *.bat
+layout.json
