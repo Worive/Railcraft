@@ -19,8 +19,10 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTankInfo;
 import net.minecraftforge.fluids.IFluidHandler;
 
+import com.indemnity83.irontank.item.ItemTankChanger;
 import com.indemnity83.irontank.reference.TankType;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Optional;
 import mods.railcraft.api.carts.IFluidCart;
 import mods.railcraft.api.carts.ILiquidTransfer;
@@ -35,6 +37,7 @@ import mods.railcraft.common.util.inventory.InvTools;
 import mods.railcraft.common.util.inventory.wrappers.InventoryMapper;
 import mods.railcraft.common.util.misc.Game;
 import mods.railcraft.common.util.misc.MiscTools;
+import secondderivative.irontankminecarts.minecarts.EntityMinecartTankAbstract;
 
 public class EntityCartTank extends EntityCartFiltered
         implements IFluidHandler, ILiquidTransfer, ISidedInventory, IFluidCart {
@@ -168,11 +171,42 @@ public class EntityCartTank extends EntityCartFiltered
 
     @Override
     public boolean doInteract(EntityPlayer player) {
+        // should imply that irontanks is also loaded
+        if (Loader.isModLoaded("irontankminecarts")) {
+            ItemStack stack = player.getCurrentEquippedItem();
+            if (stack != null && stack.getItem() instanceof ItemTankChanger changer) {
+                if (changer.type.canUpgrade(tankType())) {
+                    tryUpgrade(changer);
+                    if (!player.capabilities.isCreativeMode && --stack.stackSize <= 0) {
+                        player.setCurrentItemOrArmor(0, null);
+                    }
+                }
+                return true;
+            }
+        }
         if (Game.isHost(worldObj)) {
             if (FluidHelper.handleRightClick(this, ForgeDirection.UNKNOWN, player, true, true)) return true;
             GuiHandler.openGui(EnumGui.CART_TANK, player, worldObj, this);
         }
         return true;
+    }
+
+    @Optional.Method(modid = "irontankminecarts")
+    private void tryUpgrade(ItemTankChanger changer) {
+        if (Game.isHost(worldObj)) {
+            TankType newType = changer.type.target;
+            NBTTagCompound nbt = new NBTTagCompound();
+            writeToNBT(nbt);
+            setDead();
+            try {
+                EntityMinecartTankAbstract minecart = EntityMinecartTankAbstract.map.get(newType)
+                        .getConstructor(World.class).newInstance(worldObj);
+                minecart.readFromNBT(nbt);
+                worldObj.spawnEntityInWorld(minecart);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
