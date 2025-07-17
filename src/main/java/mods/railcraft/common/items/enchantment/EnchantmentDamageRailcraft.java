@@ -6,6 +6,7 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -51,13 +52,20 @@ public class EnchantmentDamageRailcraft extends EnchantmentCrowbar {
         return modifier;
     }
 
-    @SubscribeEvent
-    public void attackEvent(AttackEntityEvent event) {
-        target = new WeakReference<Entity>(event.target);
-    }
-
     @Override
     public boolean canApplyTogether(Enchantment enchantment) {
         return !(enchantment instanceof EnchantmentDamageRailcraft);
+    }
+
+    public void registerEventHandler() {
+        MinecraftForge.EVENT_BUS.register(new EventHandler());
+    }
+
+    public class EventHandler {
+
+        @SubscribeEvent
+        public void attackEvent(AttackEntityEvent event) {
+            target = new WeakReference<Entity>(event.target);
+        }
     }
 }
